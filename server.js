@@ -1,12 +1,12 @@
 
 
-// 1. Importa a aplicação já configurada no app.js
-const app = require('./src/app');
+require('dotenv').config(); // Carrega .env
+const app = require('./src/app'); // Importa a API
+const { startSocket } = require('./src/whatsapp/SocketHandler'); // Importa o WebSocket
 
-// 2. Define a porta (usa a do .env ou padrão 3333)
 const PORT = process.env.PORT || 3333;
 
-// 3. Inicia o servidor escutando nessa porta
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+  startSocket(); // Inicia o bot do WhatsApp
 });
