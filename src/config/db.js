@@ -1,10 +1,8 @@
+//Importa o Pool do pacote pg (PostgreSQL driver)
+const { Pool } = require("pg");
 
-
-// 1. Importa o Pool do pacote pg (PostgreSQL driver)
-const { Pool } = require('pg');
-
-// 2. Carrega variáveis do .env
-require('dotenv').config();
+// Carrega variáveis do .env
+require("dotenv").config();
 
 // 3. Cria uma pool de conexões com os dados do .env
 const pool = new Pool({
@@ -15,15 +13,14 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 });
 
-
-// 4. Testa a conexão com o banco
-pool.query('SELECT NOW()')
+// Testa a conexão com o banco
+pool
+  .query("SELECT NOW()")
   .then(() => {
-    console.log('🟢 Conectado ao banco  com sucesso!');
+    console.log("🟢 Conectado ao banco  com sucesso!");
   })
   .catch((err) => {
-    console.error('🔴 Erro ao conectar no banco:', err);
+    console.error("🔴 Erro ao conectar no banco:", err);
   });
 
-// 5. Exporta a pool para usar em outros arquivos
 module.exports = pool;

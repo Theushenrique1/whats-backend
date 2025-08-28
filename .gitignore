@@ -9,4 +9,3 @@ node_modules/
 
 # Cache do sistema
 .DS_Store
-src/whatsapp/auth/
