@@ -1,6 +1,5 @@
-
-const db = require('../config/db');
-const { v4: uuidv4 } = require('uuid');
+const db = require("../database/db");
+const { v4: uuidv4 } = require("uuid");
 
 module.exports = {
   async listar() {
@@ -19,8 +18,8 @@ module.exports = {
     const result = await db.query(
       `INSERT INTO grupo_usuarios (id, grupo_id, usuario_id)
        VALUES ($1, $2, $3) RETURNING *`,
-      [id, grupo_id, usuario_id]
+      [id, grupo_id, usuario_id],
     );
     return result.rows[0];
-  }
+  },
 };

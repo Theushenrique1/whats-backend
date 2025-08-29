@@ -1,40 +1,25 @@
-const db = require('../config/db');
-const { v4: uuidv4 } = require('uuid');
+const db = require("../database/db");
 
-module.exports = {
-  // Lista todas as mensagens com o nome do grupo e do usuário
-  async listar() {
-    const result = await db.query(`
-      SELECT m.*, u.nome AS usuario_nome, g.nome AS grupo_nome
-      FROM mensagens m
-      JOIN usuarios u ON m.usuario_id = u.id
-      JOIN grupos g ON m.grupo_id = g.id
-      ORDER BY m.data_envio DESC
-    `);
-    return result.rows;
-  },
+async function criar({
+  conteudo,
+  data_envio,
+  tipo_mensagem,
+  grupo_id,
+  usuario_id,
+}) {
+  const sql = `
+    INSERT INTO mensagens (id, conteudo, data_envio, tipo_mensagem, grupo_id, usuario_id)
+    VALUES (gen_random_uuid(), $1, to_timestamp($2), $3, $4, $5)
+    RETURNING *;
+  `;
 
-  // Cria uma nova mensagem e atualiza o contador do grupo
-  async criar({ conteudo, data_envio, tipo_mensagem, grupo_id, usuario_id }) {
-    const id = uuidv4();
+  // data_envio esperado em segundos (Webhooks geralmente mandam em segundos).
+  const ts = Number(data_envio) || Math.floor(Date.now() / 1000);
+  const tipo = tipo_mensagem || "texto";
 
-    // Insere a nova mensagem no banco
-    const result = await db.query(
-      `INSERT INTO mensagens (
-         id, conteudo, data_envio, tipo_mensagem, grupo_id, usuario_id
-       ) VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [id, conteudo, data_envio, tipo_mensagem, grupo_id, usuario_id]
-    );
+  const params = [conteudo || "", ts, tipo, grupo_id, usuario_id];
+  const { rows } = await db.query(sql, params);
+  return rows[0];
+}
 
-    // Atualiza a quantidade de mensagens no grupo relacionado
-    await db.query(
-      `UPDATE grupos
-       SET quantidade_mensagens = quantidade_mensagens + 1
-       WHERE id = $1`,
-      [grupo_id]
-    );
-
-    return result.rows[0];
-  }
-};
+module.exports = { criar };

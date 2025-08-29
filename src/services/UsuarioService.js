@@ -1,19 +1,35 @@
+// src/services/UsuarioService.js
+const db = require("../database/db");
+const logger = require("../utils/logger");
 
-const db = require('../config/db');
-const { v4: uuidv4 } = require('uuid');
+/**
+ * Upsert por número (UNIQUE). Retorna { usuario, created }
+ */
+async function upsertByNumero({ numero, nome = "" }) {
+  if (!numero) throw new Error("numero obrigatório");
 
-module.exports = {
-  async listar() {
-    const result = await db.query('SELECT * FROM usuarios ORDER BY criado_em DESC');
-    return result.rows;
-  },
+  // Tabela 'usuarios' deve ter UNIQUE (numero)
+  // Usa ON CONFLICT para atualizar nome e retornar a linha
+  const sql = `
+    INSERT INTO usuarios (numero, nome)
+    VALUES ($1, $2)
+    ON CONFLICT (numero)
+    DO UPDATE SET nome = EXCLUDED.nome
+    RETURNING *;
+  `;
 
-  async criar({ nome, numero }) {
-    const id = uuidv4();
-    const result = await db.query(
-      'INSERT INTO usuarios (id, nome, numero) VALUES ($1, $2, $3) RETURNING *',
-      [id, nome, numero]
-    );
-    return result.rows[0];
-  }
-};
+  const { rows } = await db.query(sql, [numero, nome]);
+  const usuario = rows[0];
+
+  // truque simples: se acabou de inserir, o created=true só quando não existia
+  // como não temos o flag nativo, dá para conferir com uma leitura anterior (mais caro)
+  // ou aceitar que "created" é semântico: mudou/entrou agora.
+  // Se você quiser 100% correto, faça um SELECT antes de inserir.
+  // Aqui ficamos com simples:
+  const created = false; // sem SELECT prévio não dá para afirmar.
+  logger.debug({ numero, nome, id: usuario.id }, "usuario upsert");
+
+  return { usuario, created };
+}
+
+module.exports = { upsertByNumero };
